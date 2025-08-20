@@ -1,6 +1,8 @@
 # virtual environment
 fedgen_env
 
+data/EMnist/data
+data/EMnist/u20-letters-alpha0.1-ratio0.1
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
