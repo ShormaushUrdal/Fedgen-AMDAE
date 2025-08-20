@@ -1,6 +1,9 @@
 # Fedgen algorithm with AMDAE imputations
 
 
+Note: command for few seeds:
+python main_plot.py --dataset EMnist-alpha0.1-ratio0.1 --algorithms FedGen --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --plot_legend 1 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
 ## Install Requirements:
 ```pip3 install -r requirements.txt```
 

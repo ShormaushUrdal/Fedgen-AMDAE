@@ -1,6 +1,7 @@
 from FLAlgorithms.users.userFedProx import UserFedProx
 from FLAlgorithms.servers.serverbase import Server
 from utils.model_utils import read_data, read_user_data
+from utils.data_imputation import apply_amdae_imputation
 # Implementation for FedProx Server
 
 class FedProx(Server):
@@ -12,6 +13,7 @@ class FedProx(Server):
 
         # Initialize data for all  users
         data = read_data(args.dataset)
+        data = apply_amdae_imputation(data, missing_ratio = 0.1)
         total_users = len(data[0])
         print("Users in total: {}".format(total_users))
 
