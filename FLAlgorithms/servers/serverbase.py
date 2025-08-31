@@ -190,12 +190,16 @@ class Server:
     def evaluate_personalized_model(self, selected=True, save=True):
         stats = self.test_personalized_model(selected=selected)
         test_ids, test_num_samples, test_tot_correct, test_losses = stats[:4]
-        glob_acc = np.sum(test_tot_correct)*1.0/np.sum(test_num_samples)
-        test_loss = np.sum([x * y for (x, y) in zip(test_num_samples, test_losses)]).item() / np.sum(test_num_samples)
+        glob_acc = float(np.sum(test_tot_correct) / np.sum(test_num_samples))
+        # Convert each loss tensor to a Python float before NumPy math
+        loss_vals = [l.item() if torch.is_tensor(l) else float(l) for l in test_losses]
+        test_loss = float(np.dot(np.array(test_num_samples, dtype=float),
+                                np.array(loss_vals, dtype=float)) / np.sum(test_num_samples))
         if save:
             self.metrics['per_acc'].append(glob_acc)
             self.metrics['per_loss'].append(test_loss)
         print("Average Global Accurancy = {:.4f}, Loss = {:.2f}.".format(glob_acc, test_loss))
+
 
 
     def evaluate_ensemble(self, selected=True):

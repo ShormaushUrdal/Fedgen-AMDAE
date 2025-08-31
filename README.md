@@ -2,7 +2,9 @@
 
 
 Note: command for few seeds:
-python main_plot.py --dataset EMnist-alpha0.1-ratio0.1 --algorithms FedGen --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --plot_legend 1 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedGen --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
+python main_plot.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedGen --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
 
 ## Install Requirements:
 ```pip3 install -r requirements.txt```
@@ -49,4 +51,21 @@ python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedDistill-FL --ba
 For the input attribute **algorithms**, list the name of algorithms and separate them by comma, e.g. `--algorithms FedAvg,FedGen,FedProx`
 ```
   python main_plot.py --dataset EMnist-alpha0.1-ratio0.1 --algorithms FedAvg,FedGen --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 200 --plot_legend 1
+```
+
+### For few seeds
+
+```
+python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedGen --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
+python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedAvg --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
+python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedProx --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
+python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedEnsemble --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
+python main.py --dataset EMnist-alpha0.1-ratio0.1 --algorithm FedDistill --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
+python main_plot.py --dataset EMnist-alpha0.1-ratio0.1 --algorithms "FedGen,FedAvg,FedProx,FedDistill,FedEnsemble" --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 60 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
 ```

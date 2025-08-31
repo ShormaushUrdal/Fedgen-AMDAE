@@ -1,6 +1,8 @@
 from FLAlgorithms.users.userFedDistill import UserFedDistill
 from FLAlgorithms.servers.serverbase import Server
 from utils.model_utils import read_data, read_user_data, aggregate_user_test_data
+from utils.data_imputation import apply_amdae_imputation
+
 import numpy as np
 
 class FedDistill(Server):
@@ -9,6 +11,7 @@ class FedDistill(Server):
 
         # Initialize data for all users
         data = read_data(args.dataset)
+        data = apply_amdae_imputation(data, missing_ratio = 0.1)
         # data contains: clients, groups, train_data, test_data, proxy_data
         clients = data[0]
         total_users = len(clients)

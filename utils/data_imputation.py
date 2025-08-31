@@ -1,5 +1,5 @@
 """
-Data Imputation Module using Adaptive-Learned Median-Filled Deep Autoencoder (AM-DAE)
+Enhanced Data Imputation Module using Adaptive-Learned Median-Filled Deep Autoencoder (AM-DAE)
 Based on: "Imputation of Missing Values in Time Series Using an Adaptive-Learned 
 Median-Filled Deep Autoencoder" (IEEE Transactions on Cybernetics, 2023)
 """
@@ -14,7 +14,9 @@ import random
 import matplotlib.pyplot as plt
 import os
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+from scipy.spatial.distance import jensenshannon
 from abc import ABC, abstractmethod
+
 
 class AMDAE(nn.Module):
     def __init__(self, input_dim: int, hidden_dims: List[int], activation='relu', dropout_rate=0.1):
@@ -25,9 +27,7 @@ class AMDAE(nn.Module):
         self.activation = activation
         self.dropout_rate = dropout_rate
         
-        # Initialize dropout first before building encoder/decoder
-        self.dropout = nn.Dropout(dropout_rate)
-        
+        self.dropout = nn.Dropout(dropout_rate)        
         self.encoder = self._build_encoder()
         self.decoder = self._build_decoder()
         
@@ -43,7 +43,7 @@ class AMDAE(nn.Module):
                 layers.append(nn.Tanh())
             elif self.activation == 'sigmoid':
                 layers.append(nn.Sigmoid())
-            layers.append(nn.Dropout(self.dropout_rate))  # Create new dropout instance
+            layers.append(nn.Dropout(self.dropout_rate)) 
         
         return nn.Sequential(*layers)
     
@@ -71,6 +71,7 @@ class AMDAE(nn.Module):
     
     def get_number_of_parameters(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
 
 class MissingDataSimulator:
     def __init__(self, missing_patterns=['random', 'fixed_intervals', 'continuous_periods']):
@@ -129,6 +130,7 @@ class MissingDataSimulator:
         
         return corrupted_data, missing_mask
 
+
 class BaseImputer(ABC):
     def __init__(self, name: str):
         self.name = name
@@ -136,6 +138,7 @@ class BaseImputer(ABC):
     @abstractmethod
     def fit_impute(self, data_with_missing: np.ndarray, missing_mask: np.ndarray) -> np.ndarray:
         pass
+
 
 class MeanImputer(BaseImputer):
     def __init__(self):
@@ -149,6 +152,7 @@ class MeanImputer(BaseImputer):
             imputed_data[missing_mask[:, j] == 1, j] = mean_val
         return imputed_data
 
+
 class MedianImputer(BaseImputer):
     def __init__(self):
         super().__init__("Median Imputation")
@@ -161,6 +165,7 @@ class MedianImputer(BaseImputer):
             imputed_data[missing_mask[:, j] == 1, j] = median_val
         return imputed_data
 
+
 class ZeroImputer(BaseImputer):
     def __init__(self):
         super().__init__("Zero Imputation")
@@ -169,6 +174,7 @@ class ZeroImputer(BaseImputer):
         imputed_data = data_with_missing.copy()
         imputed_data[missing_mask == 1] = 0
         return imputed_data
+
 
 class AMDAEImputer(BaseImputer):
     def __init__(self, input_dim: int, hidden_dims: List[int] = None, 
@@ -279,6 +285,7 @@ class AMDAEImputer(BaseImputer):
         
         return self.fit_impute(data_with_missing, missing_mask)
 
+
 def process_federated_data_for_imputation(data: Tuple) -> Dict[str, Any]:
     clients, groups, train_data, test_data, proxy_data = data
     
@@ -314,6 +321,7 @@ def process_federated_data_for_imputation(data: Tuple) -> Dict[str, Any]:
     
     return processed_data
 
+
 def reconstruct_federated_data(imputed_data: np.ndarray, metadata: Dict[str, Any], 
                              original_data: Tuple) -> Tuple:
     clients, groups, train_data, test_data, proxy_data = original_data
@@ -339,44 +347,208 @@ def reconstruct_federated_data(imputed_data: np.ndarray, metadata: Dict[str, Any
     
     return clients, groups, new_train_data, test_data, proxy_data
 
-def calculate_imputation_metrics(original_data: np.ndarray, imputed_data: np.ndarray, 
-                               missing_mask: np.ndarray) -> Dict[str, float]:
+def _kl_divergence(original_data: np.ndarray, imputed_data: np.ndarray, 
+                                 missing_mask: np.ndarray) -> float:
+        """Calculate proper KL divergence between original and imputed missing values."""
+        missing_positions = missing_mask == 1
+        
+        if not np.any(missing_positions):
+            return 0.0
+        
+        original_missing = original_data[missing_positions]
+        imputed_missing = imputed_data[missing_positions]
+        
+        # Use histogram-based probability estimation
+        min_val = min(np.min(original_missing), np.min(imputed_missing))
+        max_val = max(np.max(original_missing), np.max(imputed_missing))
+        
+        # Create bins
+        bins = np.linspace(min_val, max_val, num=50)
+        
+        # Calculate histograms
+        orig_hist, _ = np.histogram(original_missing, bins=bins, density=True)
+        imp_hist, _ = np.histogram(imputed_missing, bins=bins, density=True)
+        
+        # Convert to probabilities
+        orig_prob = orig_hist / (np.sum(orig_hist) + 1e-8)
+        imp_prob = imp_hist / (np.sum(imp_hist) + 1e-8)
+        
+        # Add small epsilon to avoid log(0)
+        epsilon = 1e-10
+        orig_prob = np.maximum(orig_prob, epsilon)
+        imp_prob = np.maximum(imp_prob, epsilon)
+        
+        # Calculate KL divergence: KL(P||Q) = sum(P * log(P/Q))
+        kl_div = np.sum(orig_prob * np.log(orig_prob / imp_prob))
+        
+        return float(kl_div)
+
+def calculate_comprehensive_imputation_metrics(original_data: np.ndarray, imputed_data: np.ndarray, 
+                                             missing_mask: np.ndarray, data_with_missing: np.ndarray = None) -> Dict[str, float]:
+    """Calculate comprehensive imputation metrics with proper KL divergence."""
     missing_positions = missing_mask == 1
     
     if not np.any(missing_positions):
-        return {'RMSE': 0.0, 'MAPE': 0.0}
+        return {'RMSE': 0.0, 'MAPE': 0.0, 'KL-Divergence': 0.0, 'Mean-Difference': 0.0, 'Adaptive-Loss': 0.0}
     
     original_missing = original_data[missing_positions]
     imputed_missing = imputed_data[missing_positions]
     
+    # RMSE
     rmse = np.sqrt(mean_squared_error(original_missing, imputed_missing))
     
-    mape = np.mean(np.abs((original_missing - imputed_missing) / (original_missing + 1e-8))) * 100
+    # MAPE
+    mape = np.mean(np.abs((original_missing - imputed_missing) / (np.abs(original_missing) + 1e-8))) * 100
     
-    return {'RMSE': rmse, 'MAPE': mape}
+    # Proper KL-Divergence
+    try:
+        kl_divergence = _kl_divergence(original_data, imputed_data, missing_mask)
+        if not np.isfinite(kl_divergence) or kl_divergence > 1000:
+            kl_divergence = 1000.0
+    except:
+        kl_divergence = 1000.0
+    
+    # Mean Difference
+    mean_diff = np.abs(np.mean(original_missing) - np.mean(imputed_missing))
+    
+    # Adaptive Loss
+    alpha = 0.7
+    beta = 0.3
+    
+    observed_positions = ~missing_positions.astype(bool)
+    observed_loss = np.mean((original_data[observed_positions] - imputed_data[observed_positions]) ** 2) if np.any(observed_positions) else 0
+    missing_loss = np.mean((original_missing - imputed_missing) ** 2)
+    
+    adaptive_loss = alpha * observed_loss + beta * missing_loss
+    
+    return {
+        'RMSE': rmse,
+        'MAPE': mape,
+        'KL-Divergence': kl_divergence,
+        'Mean-Difference': mean_diff,
+        'Adaptive-Loss': adaptive_loss
+    }
 
-def plot_imputation_comparison(results: Dict[str, Dict[str, float]], save_path: str = 'imputation_comparison.png'):
+def calculate_overall_score(all_results: Dict[str, Dict[str, float]]) -> Dict[str, float]:
+    """Calculate normalized overall performance scores across all methods (lower is better)."""
+    weights = {
+        'RMSE': 0.2,
+        'MAPE': 0.2,
+        'KL-Divergence': 0.2,
+        'Mean-Difference': 0.2,
+        'Adaptive-Loss': 0.2
+    }
+    
+    # Find max value for each metric across all methods
+    max_vals = {}
+    metrics = list(next(iter(all_results.values())).keys())
+    for metric in metrics:
+        max_vals[metric] = max(
+            all_results[method][metric] if np.isfinite(all_results[method][metric]) else 0
+            for method in all_results
+        )
+    
+    overall_scores = {}
+    for method, metric_vals in all_results.items():
+        score = 0
+        for metric, value in metric_vals.items():
+            if metric in max_vals and max_vals[metric] > 0:
+                # Normalize by max value across all methods
+                norm_val = value / max_vals[metric] if np.isfinite(value) else 1000
+                weight = weights.get(metric, 0)
+                score += weight * norm_val
+            else:
+                score += 0
+        overall_scores[method] = score
+    return overall_scores
+
+def select_best_imputation_method(results: Dict[str, Dict[str, float]]) -> str:
+    """Select the best imputation method based on normalized overall performance score."""
+    # Use the normalized scoring function that takes all results
+    overall_scores = calculate_overall_score(results)
+    
+    best_method = min(overall_scores, key=overall_scores.get)
+    
+    print(f"\n=== IMPUTATION METHOD PERFORMANCE RANKING (Normalized) ===")
+    sorted_methods = sorted(overall_scores.items(), key=lambda x: x[1])
+    
+    for rank, (method, score) in enumerate(sorted_methods, 1):
+        print(f"{rank}. {method}: {score:.4f}")
+    
+    print(f"\n🏆 BEST PERFORMING METHOD: {best_method}")
+    print(f"   Overall Normalized Score: {overall_scores[best_method]:.4f}")
+    
+    return best_method
+
+
+def plot_comprehensive_imputation_comparison(results: Dict[str, Dict[str, float]], 
+                                           save_path: str = 'results/comprehensive_imputation_comparison.png'):
+    """Plot comprehensive comparison of all imputation methods across all metrics."""
     methods = list(results.keys())
-    rmse_values = [results[method]['RMSE'] for method in methods]
-    mape_values = [results[method]['MAPE'] for method in methods]
+    metrics = list(next(iter(results.values())).keys())
     
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    n_metrics = len(metrics)
+    n_methods = len(methods)
     
-    ax1.bar(methods, rmse_values, color=['blue', 'green', 'red', 'orange'][:len(methods)])
-    ax1.set_title('RMSE Comparison')
-    ax1.set_ylabel('RMSE')
-    ax1.tick_params(axis='x', rotation=45)
+    # Create subplots for each metric
+    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+    axes = axes.flatten()
     
-    ax2.bar(methods, mape_values, color=['blue', 'green', 'red', 'orange'][:len(methods)])
-    ax2.set_title('MAPE Comparison')
-    ax2.set_ylabel('MAPE (%)')
-    ax2.tick_params(axis='x', rotation=45)
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    
+    for i, metric in enumerate(metrics):
+        if i < len(axes):
+            values = [results[method][metric] for method in methods]
+            
+            # Handle infinite values for plotting
+            finite_values = [v if np.isfinite(v) else max([val for val in values if np.isfinite(val)]) * 2 
+                           for v in values]
+            
+            bars = axes[i].bar(range(len(methods)), finite_values, 
+                              color=colors[:len(methods)], alpha=0.7)
+            
+            axes[i].set_title(f'{metric} Comparison', fontsize=12, fontweight='bold')
+            axes[i].set_ylabel(metric)
+            axes[i].set_xticks(range(len(methods)))
+            axes[i].set_xticklabels(methods, rotation=45, ha='right')
+            
+            # Add value labels on bars
+            for j, (bar, value) in enumerate(zip(bars, values)):
+                if np.isfinite(value):
+                    axes[i].text(bar.get_x() + bar.get_width()/2, bar.get_height() + bar.get_height()*0.01,
+                               f'{value:.3f}', ha='center', va='bottom', fontsize=8)
+                else:
+                    axes[i].text(bar.get_x() + bar.get_width()/2, bar.get_height() + bar.get_height()*0.01,
+                               'inf', ha='center', va='bottom', fontsize=8)
+    
+    # Overall score comparison with normalization
+    if len(axes) > len(metrics):
+        overall_scores = calculate_overall_score(results)
+        score_values = list(overall_scores.values())
+        
+        bars = axes[len(metrics)].bar(range(len(methods)), score_values, 
+                                     color=colors[:len(methods)], alpha=0.7)
+        
+        axes[len(metrics)].set_title('Overall Performance Score (Normalized)\n(Lower is Better)', 
+                                   fontsize=12, fontweight='bold')
+        axes[len(metrics)].set_ylabel('Normalized Score')
+        axes[len(metrics)].set_xticks(range(len(methods)))
+        axes[len(metrics)].set_xticklabels(methods, rotation=45, ha='right')
+        
+        # Add value labels on bars
+        for bar, score in zip(bars, score_values):
+            axes[len(metrics)].text(bar.get_x() + bar.get_width()/2, 
+                                  bar.get_height() + bar.get_height()*0.01,
+                                  f'{score:.3f}', ha='center', va='bottom', fontsize=8)
     
     plt.tight_layout()
     
     os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
+    
+    return save_path
+
 
 def apply_amdae_imputation(data: Tuple, missing_rate: float = 0.1, 
                           missing_pattern: str = 'random',
@@ -388,12 +560,13 @@ def apply_amdae_imputation(data: Tuple, missing_rate: float = 0.1,
                           delta_t: int = 16,
                           device: str = 'cpu',
                           compare_methods: bool = True,
-                          save_plot_path: str = 'results/imputation_comparison.png',
+                          save_plot_path: str = 'results/comprehensive_imputation_comparison.png',
                           **kwargs) -> Tuple:
     
-    print(f"Starting AM-DAE imputation with {missing_rate*100}% missing data...")
+    print(f"Starting Enhanced AM-DAE imputation with {missing_rate*100}% missing data...")
     print(f"Missing pattern: {missing_pattern}")
     print(f"Using time-series algorithm: {use_timeseries}")
+    
     processed_data = process_federated_data_for_imputation(data)
     
     if len(processed_data['combined_data']) == 0:
@@ -412,55 +585,70 @@ def apply_amdae_imputation(data: Tuple, missing_rate: float = 0.1,
     
     input_dim = data_with_missing.shape[1]
     
-    imputers = []
-    if compare_methods:
-        imputers.extend([
-            MeanImputer(),
-            MedianImputer(),
-            ZeroImputer()
-        ])
-    
-    amdae_imputer = AMDAEImputer(
-        input_dim=input_dim,
-        hidden_dims=hidden_dims,
-        max_epochs=max_epochs,
-        batch_size=batch_size,
-        learning_rate=learning_rate,
-        device=device
-    )
-    imputers.append(amdae_imputer)
+    # Initialize all imputers
+    imputers = [
+        MeanImputer(),
+        MedianImputer(),
+        ZeroImputer(),
+        AMDAEImputer(
+            input_dim=input_dim,
+            hidden_dims=hidden_dims,
+            max_epochs=max_epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            device=device
+        )
+    ]
     
     results = {}
-    final_imputed_data = None
+    imputed_data_dict = {}
     
+    print(f"\n=== RUNNING IMPUTATION METHODS ===")
     for imputer in imputers:
-        print(f"Running {imputer.name}...")
+        print(f"\nRunning {imputer.name}...")
         
         if isinstance(imputer, AMDAEImputer) and use_timeseries:
             imputed_data = imputer.fit_impute_timeseries(data_with_missing, missing_mask, delta_t)
         else:
             imputed_data = imputer.fit_impute(data_with_missing, missing_mask)
         
-        metrics = calculate_imputation_metrics(original_complete, imputed_data, missing_mask)
+        # Calculate comprehensive metrics
+        metrics = calculate_comprehensive_imputation_metrics(
+            original_complete, imputed_data, missing_mask, data_with_missing
+        )
+        
         results[imputer.name] = metrics
+        imputed_data_dict[imputer.name] = imputed_data
         
-        print(f"{imputer.name} - RMSE: {metrics['RMSE']:.4f}, MAPE: {metrics['MAPE']:.4f}%")
-        
-        if isinstance(imputer, AMDAEImputer):
-            final_imputed_data = imputed_data
+        # Display results for this method
+        print(f"  Results for {imputer.name}:")
+        for metric_name, value in metrics.items():
+            if np.isfinite(value):
+                print(f"    {metric_name}: {value:.4f}")
+            else:
+                print(f"    {metric_name}: inf")
     
+    # Select best method
+    best_method = select_best_imputation_method(results)
+    final_imputed_data = imputed_data_dict[best_method]
+    
+    # Plot comprehensive comparison
     if compare_methods and len(results) > 1:
-        plot_imputation_comparison(results, save_plot_path)
-        print(f"Comparison plot saved to: {save_plot_path}")
+        plot_path = plot_comprehensive_imputation_comparison(results, save_plot_path)
+        print(f"\nComprehensive comparison plot saved to: {plot_path}")
     
+    # Reconstruct federated data using the best method
     reconstructed_data = reconstruct_federated_data(
         final_imputed_data, processed_data, data
     )
     
-    print("AM-DAE imputation completed successfully!")
+    print(f"\n Enhanced AM-DAE imputation completed successfully!")
+    print(f"   Selected method: {best_method}")
+    print(f"   Final dataset imputed using: {best_method}")
     
     return reconstructed_data
 
+
 if __name__ == "__main__":
-    print("AM-DAE Data Imputation Module")
+    print("Enhanced AM-DAE Data Imputation Module with Comprehensive Evaluation")
     print("Usage: Import apply_amdae_imputation function in your federated learning code")

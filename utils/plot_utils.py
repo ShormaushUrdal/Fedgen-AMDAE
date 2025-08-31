@@ -13,46 +13,14 @@ COLORS=list(mcolors.TABLEAU_COLORS)
 MARKERS=["o", "v", "s", "*", "x", "P"]
 
 plt.rcParams.update({'font.size': 14})
-n_seeds=1
+n_seeds=3
 
 def load_results(args, algorithm, seed):
     alg = get_log_path(args, algorithm, seed, args.gen_batch_size)
     hf = h5py.File("./{}/{}.h5".format(args.result_path, alg), 'r')
-    
-    print(f"Successfully opened: {alg}.h5")
-    
-    # Debug: Check what keys are actually in the HDF5 file
-    print("Keys in HDF5 file:")
-    for key in hf.keys():
-        print(f"  {key}")
-    
-    # Debug: Check what METRICS expects
-    print("Expected METRICS:")
-    for key in METRICS:
-        print(f"  {key}")
-    
-    # Debug: Check for missing keys
-    missing_keys = []
-    for key in METRICS:
-        if key not in hf.keys():
-            missing_keys.append(key)
-    
-    if missing_keys:
-        print(f"Missing keys: {missing_keys}")
-    
     metrics = {}
     for key in METRICS:
-        if key in hf.keys():
-            try:
-                data = hf.get(key)[:]
-                metrics[key] = np.array(data)
-                print(f"Successfully loaded {key}: shape {metrics[key].shape}")
-            except Exception as e:
-                print(f"Error loading {key}: {e}")
-        else:
-            print(f"Key '{key}' not found in file")
-            
-    hf.close()
+        metrics[key] = np.array(hf.get(key)[:])
     return metrics
 
 
@@ -69,57 +37,11 @@ def get_label_name(name):
         name = 'Ensemble'
     elif 'FedAvg' in name:
         name = 'FedAvg'
+    elif 'FedProx' in name:
+        name = 'FedProx'
     return name
 
 def plot_results(args, algorithms):
-    n_seeds = args.times
-    dataset_ = args.dataset.split('-')
-    sub_dir = dataset_[0] + "/" + dataset_[2] # e.g. Mnist/ratio0.5
-    
-    # Fix: Use os.makedirs instead of os.system
-    os.makedirs(f"figs/{sub_dir}", exist_ok=True)
-    
-    plt.figure(1, figsize=(5, 5))
-    TOP_N = 5
-    max_acc = 0
-    
-    for i, algorithm in enumerate(algorithms):
-        algo_name = get_label_name(algorithm)
-        ######### plot test accuracy ############
-        metrics = [load_results(args, algorithm, seed) for seed in range(n_seeds)]
-        all_curves = np.concatenate([metrics[seed]['glob_acc'] for seed in range(n_seeds)])
-        top_accs = np.concatenate([np.sort(metrics[seed]['glob_acc'])[-TOP_N:] for seed in range(n_seeds)])
-        acc_avg = np.mean(top_accs)
-        acc_std = np.std(top_accs)
-        info = 'Algorithm: {:<10s}, Accuracy = {:.2f} %, deviation = {:.2f}'.format(algo_name, acc_avg * 100, acc_std * 100)
-        print(info)
-        length = len(all_curves) // n_seeds
-        
-        sns.lineplot(
-            x=np.array(list(range(length)) * n_seeds) + 1,
-            y=all_curves.astype(float),
-            legend='brief',
-            color=COLORS[i],
-            label=algo_name,
-            errorbar="sd",  # Fix: Replace ci="sd" with errorbar="sd"
-        )
-
-    plt.gcf()
-    plt.grid()
-    plt.title(dataset_[0] + ' Test Accuracy')
-    plt.xlabel('Epoch')
-    max_acc = np.max([max_acc, np.max(all_curves)]) + 4e-2
-
-    if args.min_acc < 0:
-        alpha = 0.7
-        min_acc = np.max(all_curves) * alpha + np.min(all_curves) * (1-alpha)
-    else:
-        min_acc = args.min_acc
-    plt.ylim(min_acc, max_acc)
-    fig_save_path = os.path.join('figs', sub_dir, dataset_[0] + '-' + dataset_[2] + '.png')
-    plt.savefig(fig_save_path, bbox_inches='tight', pad_inches=0, format='png', dpi=400)
-    print('file saved to {}'.format(fig_save_path))
-
     n_seeds = args.times
     dataset_ = args.dataset.split('-')
     sub_dir = dataset_[0] + "/" + dataset_[2] # e.g. Mnist/ratio0.5
