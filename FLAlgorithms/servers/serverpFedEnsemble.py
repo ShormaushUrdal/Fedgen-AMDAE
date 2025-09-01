@@ -12,7 +12,7 @@ class FedEnsemble(Server):
 
         # Initialize data for all users
         data = read_data(args.dataset)
-        data = apply_amdae_imputation(data, missing_rate = 0.1)
+        data = apply_amdae_imputation(data)
         # data contains: clients, groups, train_data, test_data, proxy_data
         clients = data[0]
         total_users = len(clients)

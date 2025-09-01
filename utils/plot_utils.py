@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import h5py
 import numpy as np
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
@@ -60,7 +61,6 @@ def plot_results(args, algorithms):
 
     for i, algorithm in enumerate(algorithms):
         algo_name = get_label_name(algorithm)
-
         metrics = [load_results(args, algorithm, seed) for seed in range(n_seeds)]
         curves = [np.asarray(m['glob_acc'], dtype=float) for m in metrics]
 
@@ -102,8 +102,11 @@ def plot_results(args, algorithms):
             )
 
     ax.grid(True)
-    ax.set_title(f"{dataset_name} Test Accuracy")
-    ax.set_xlabel('Epoch')
+    ax.set_xlabel('Rounds')
+    ax.set_ylabel('Accuracy')
+    yticks = np.arange(0, 1.01, 0.05) 
+    ax.set_yticks(yticks)
+    ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
 
     y_top = min(1.0, global_max + 0.02)
     ax.set_ylim(0.0, y_top)
@@ -111,6 +114,6 @@ def plot_results(args, algorithms):
         ax.set_xlim(0, max(0, global_len - 1))
 
     fig.tight_layout()
-    fig_save_path = os.path.join('figs', sub_dir, f"{dataset_name}-{subset}.png")
+    fig_save_path = os.path.join('figs', sub_dir, f"{dataset_name}.png")
     fig.savefig(fig_save_path, bbox_inches='tight', pad_inches=0.05, dpi=400)
     print('file saved to {}'.format(fig_save_path))
