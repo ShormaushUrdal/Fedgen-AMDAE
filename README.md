@@ -67,4 +67,6 @@ python main_plot.py --dataset EMnist-alpha0.1-ratio0.1 --algorithms "FedGen,FedA
 
 python main_plot.py --dataset EMnist-alpha1.0-ratio0.1 --algorithms "FedGen,FedAvg,FedProx,FedDistill,FedEnsemble" --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 100 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
 
+python main_plot.py --dataset Mnist-alpha0.1-ratio0.5 --algorithms "FedGen,FedAvg,FedProx,FedDistill,FedEnsemble" --batch_size 32 --local_epochs 20 --num_users 10 --num_glob_iters 100 --times 1 --embedding 0 --learning_rate 0.01 --gen_batch_size 32
+
 ```

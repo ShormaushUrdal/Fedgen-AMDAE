@@ -1,4 +1,4 @@
-#### To generated CelebA dataset
+#### To generate CelebA dataset
 ##### Step 1.
 follow the [LEAF instructions](https://github.com/TalwalkarLab/leaf/tree/master/data/celeba) to download the raw celeb data, and generate `train` and `test` subfolders.
 

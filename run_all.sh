@@ -16,7 +16,7 @@ ALGORITHMS=(FedGen FedAvg FedProx FedEnsemble FedDistill)
 
 COMMON_ARGS=(
   --dataset "$DATASET"
-  --batch_size 32
+  --batch_size 64
   --local_epochs 20
   --num_users 10
   --num_glob_iters "$GLOB_ITERS"
