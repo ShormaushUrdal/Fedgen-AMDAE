@@ -58,7 +58,7 @@ def collect_evaluation_metrics(model: torch.nn.Module, users: List[Any], device:
 
 def save_evaluation_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray, 
                           algorithm: str, dataset: str, glob_iter: int, 
-                          results_dir: str = 'results') -> str:
+                          results_dir: str = 'results/metrics') -> str:
     """
     Save evaluation metrics to HDF5 file with multiple dataset names for compatibility.
     
@@ -69,13 +69,14 @@ def save_evaluation_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.n
         algorithm: Algorithm name for filename
         dataset: Dataset name for filename
         glob_iter: Global iteration number for filename
-        results_dir: Directory to save results (default: 'results')
+        results_dir: Directory to save results (default: 'results/metrics')
     
     Returns:
         Path to saved file
     """
-    os.makedirs(results_dir, exist_ok=True)
-    filename = os.path.join(results_dir, f'{algorithm}_{dataset}_round_{glob_iter}.h5')
+    dataset_dir = os.path.join(results_dir, dataset)
+    os.makedirs(dataset_dir, exist_ok=True)
+    filename = os.path.join(dataset_dir, f'{algorithm}_{dataset}_round_{glob_iter}.h5')
     
     with h5py.File(filename, 'w') as f:
         # Save true labels with multiple names for compatibility
@@ -104,7 +105,7 @@ def save_evaluation_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.n
 
 def save_evaluation_metrics_from_model(model: torch.nn.Module, users: List[Any], 
                                      algorithm: str, dataset: str, glob_iter: int,
-                                     results_dir: str = 'results', 
+                                     results_dir: str = 'results/metrics', 
                                      device: Union[str, torch.device] = None) -> str:
     """
     Complete pipeline: collect metrics from model and users, then save to file.
@@ -115,7 +116,7 @@ def save_evaluation_metrics_from_model(model: torch.nn.Module, users: List[Any],
         algorithm: Algorithm name for filename
         dataset: Dataset name for filename
         glob_iter: Global iteration number for filename
-        results_dir: Directory to save results (default: 'results')
+        results_dir: Directory to save results (default: 'results/metrics')
         device: Device to run evaluation on (auto-detected if None)
     
     Returns:
