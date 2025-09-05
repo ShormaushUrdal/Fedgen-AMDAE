@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from torchvision.utils import save_image
+from utils.metrics_utils import save_evaluation_metrics_from_model
 from utils.data_imputation import apply_amdae_imputation
 import os
 import copy
@@ -107,7 +108,9 @@ class FedGen(Server):
             agg_time = curr_timestamp - self.timestamp
             self.metrics['server_agg_time'].append(agg_time)
             if glob_iter  > 0 and glob_iter % 20 == 0 and self.latent_layer_idx == 0:
-                self.visualize_images(self.generative_model, glob_iter, repeats=10)
+                self.visualize_images(self.generative_model, glob_iter, repeats=10)            
+            save_evaluation_metrics_from_model(self.model, self.users, self.algorithm, 
+                                               self.dataset, glob_iter)
 
         self.save_results(args)
         self.save_model()

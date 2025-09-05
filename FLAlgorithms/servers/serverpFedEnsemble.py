@@ -2,6 +2,7 @@ from FLAlgorithms.users.useravg import UserAVG
 from FLAlgorithms.servers.serverbase import Server
 from utils.model_utils import read_data, read_user_data, aggregate_user_test_data
 from utils.data_imputation import apply_amdae_imputation
+from utils.metrics_utils import save_evaluation_metrics_from_model
 
 import torch.nn as nn
 import numpy as np
@@ -49,6 +50,8 @@ class FedEnsemble(Server):
                     personalized=False, lr_decay=True, count_labels=True)
             self.aggregate_parameters()
             self.evaluate_ensemble(selected=False)
+            save_evaluation_metrics_from_model(self.model, self.users, self.algorithm, 
+                                               self.dataset, glob_iter)
 
         self.save_results(args)
         self.save_model()

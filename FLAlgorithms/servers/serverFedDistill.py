@@ -2,7 +2,7 @@ from FLAlgorithms.users.userFedDistill import UserFedDistill
 from FLAlgorithms.servers.serverbase import Server
 from utils.model_utils import read_data, read_user_data, aggregate_user_test_data
 from utils.data_imputation import apply_amdae_imputation
-
+from utils.metrics_utils import save_evaluation_metrics_from_model
 import numpy as np
 
 class FedDistill(Server):
@@ -69,7 +69,8 @@ class FedDistill(Server):
                 self.aggregate_parameters()
             self.aggregate_logits() # aggregate label-wise logit vector
             self.evaluate_personalized_model()
-
+            save_evaluation_metrics_from_model(self.model, self.users, self.algorithm, 
+                                               self.dataset, glob_iter) 
         self.save_results(args)
         self.save_model()
 

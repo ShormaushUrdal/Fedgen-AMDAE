@@ -2,6 +2,7 @@ from FLAlgorithms.users.userFedProx import UserFedProx
 from FLAlgorithms.servers.serverbase import Server
 from utils.model_utils import read_data, read_user_data
 from utils.data_imputation import apply_amdae_imputation
+from utils.metrics_utils import save_evaluation_metrics_from_model
 # Implementation for FedProx Server
 
 class FedProx(Server):
@@ -35,5 +36,7 @@ class FedProx(Server):
             for user in self.selected_users: # allow selected users to train
                     user.train(glob_iter)
             self.aggregate_parameters()
+            save_evaluation_metrics_from_model(self.model, self.users, self.algorithm, 
+                                               self.dataset, glob_iter)
         self.save_results(args)
         self.save_model()
