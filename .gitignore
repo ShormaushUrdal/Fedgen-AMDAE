@@ -6,6 +6,8 @@ data/EMnist/u20-letters-alpha0.1-ratio0.1
 data/EMnist/u20-letters-alpha1.0-ratio0.1
 data/EMnist/u20-letters-alpha10.0-ratio0.1
 
+data/CelebA/leaf
+
 data/Mnist/data
 data/Mnist/u20c10-alpha0.1-ratio0.5
 data/Mnist/u20c10-alpha1.0-ratio0.5
