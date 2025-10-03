@@ -23,7 +23,7 @@ COMMON_ARGS=(
   --times 1
   --embedding 0
   --learning_rate 0.01
-  --gen_batch_size 32
+  --gen_batch_size 64
 )
 
 for algo in "${ALGORITHMS[@]}"; do
