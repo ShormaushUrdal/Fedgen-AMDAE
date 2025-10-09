@@ -550,7 +550,7 @@ def plot_comprehensive_imputation_comparison(results: Dict[str, Dict[str, float]
     return save_path
 
 
-def apply_amdae_imputation(data: Tuple, missing_rate: float = 0.2, 
+def apply_amdae_imputation(data: Tuple, missing_rate: float = 0.6, 
                           missing_pattern: str = 'random',
                           hidden_dims: List[int] = None,
                           max_epochs: int = 10,
