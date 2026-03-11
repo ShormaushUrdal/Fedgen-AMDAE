@@ -9,7 +9,8 @@ CONFIGS_ = {
     'mnist': ([6, 16, 'F'], 1, 10, 784, 32),
     'mnist_cnn1': ([6, 'M', 16, 'M', 'F'], 1, 10, 64, 32),
     'mnist_cnn2': ([16, 'M', 32, 'M', 'F'], 1, 10, 128, 32),
-    'celeb': ([16, 'M', 32, 'M', 64, 'M', 'F'], 3, 2, 64, 32)
+    'celeb': ([16, 'M', 32, 'M', 64, 'M', 'F'], 3, 2, 64, 32),
+    'ucihar': ([6, 16, 'F'], 1, 6, 576, 32),  # 1-ch 24x24, Conv->12x12->6x6, flat=576
 }
 
 # temporary roundabout to evaluate sensitivity of the generator
@@ -27,6 +28,7 @@ GENERATORCONFIGS = {
     'emnist-cnn1': (128, 32, 1, 26, 32),
     'emnist-cnn2': (128, 32, 1, 26, 16),
     'emnist-cnn3': (64, 32, 1, 26, 32),
+    'ucihar': (256, 32, 1, 6, 32),
 }
 
 
@@ -72,6 +74,20 @@ RUNCONFIGS = {
             'unique_labels': 2,
             'generative_alpha': 10,
             'generative_beta': 10, 
+            'weight_decay': 1e-2
+        },
+
+    'ucihar':
+        {
+            'ensemble_lr': 1e-4,
+            'ensemble_batch_size': 128,
+            'ensemble_epochs': 50,
+            'num_pretrain_iters': 20,
+            'ensemble_alpha': 1,    # teacher loss (server side)
+            'ensemble_beta': 0,     # adversarial student loss
+            'unique_labels': 6,     # 6 activity classes
+            'generative_alpha': 10,
+            'generative_beta': 1,
             'weight_decay': 1e-2
         },
 

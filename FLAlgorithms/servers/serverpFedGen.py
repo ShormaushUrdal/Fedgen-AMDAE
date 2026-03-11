@@ -20,7 +20,7 @@ class FedGen(Server):
         # Initialize data for all users
         data = read_data(args.dataset)
         # data contains: clients, groups, train_data, test_data, proxy_data
-        data = apply_amdae_imputation(data)
+        data = apply_amdae_imputation(data, missing_rate=args.missing_rate)
         clients = data[0]
         total_users = len(clients)
         self.total_test_samples = 0
@@ -205,7 +205,7 @@ class FedGen(Server):
         """
         Generate and visualize data for a generator.
         """
-        os.system("mkdir -p images")
+        os.makedirs("images", exist_ok=True)
         path = f'images/{self.algorithm}-{self.dataset}-iter{glob_iter}.png'
         y=self.available_labels
         y = np.repeat(y, repeats=repeats, axis=0)

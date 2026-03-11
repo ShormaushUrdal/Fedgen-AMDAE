@@ -14,7 +14,7 @@ class FedProx(Server):
 
         # Initialize data for all  users
         data = read_data(args.dataset)
-        data = apply_amdae_imputation(data)
+        data = apply_amdae_imputation(data, missing_rate=args.missing_rate)
         total_users = len(data[0])
         print("Users in total: {}".format(total_users))
 

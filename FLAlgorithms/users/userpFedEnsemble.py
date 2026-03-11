@@ -136,7 +136,7 @@ class UserpFedEnsemble(User):
         """
         Generate and visualize data for a generator.
         """
-        os.system("mkdir -p images")
+        os.makedirs("images", exist_ok=True)
         path = f'images/{self.algorithm}-{self.dataset}-user{self.id}-iter{glob_iter}.png'
         y=self.available_labels
         y = np.repeat(y, repeats=repeats, axis=0)

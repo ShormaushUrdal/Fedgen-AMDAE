@@ -567,6 +567,10 @@ def apply_amdae_imputation(data: Tuple, missing_rate: float = 0.7,
     print(f"Missing pattern: {missing_pattern}")
     print(f"Using time-series algorithm: {use_timeseries}")
     
+    if missing_rate <= 0:
+        print("Missing rate is 0. Skipping imputation.")
+        return data
+    
     processed_data = process_federated_data_for_imputation(data)
     
     if len(processed_data['combined_data']) == 0:

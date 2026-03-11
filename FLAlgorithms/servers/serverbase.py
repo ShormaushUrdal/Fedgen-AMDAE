@@ -34,7 +34,7 @@ class Server:
         self.metrics = {key:[] for key in METRICS}
         self.timestamp = None
         self.save_path = args.result_path
-        os.system("mkdir -p {}".format(self.save_path))
+        os.makedirs(self.save_path, exist_ok=True)
 
 
     def init_ensemble_configs(self):
