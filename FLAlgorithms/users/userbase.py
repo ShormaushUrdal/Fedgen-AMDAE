@@ -30,7 +30,8 @@ class User:
         self.K = args.K
         self.dataset = args.dataset
         #self.trainloader = DataLoader(train_data, self.batch_size, drop_last=False)
-        self.trainloader = DataLoader(train_data, self.batch_size, shuffle=True, drop_last=True)
+        drop_last_flag = True if len(train_data) > self.batch_size else False
+        self.trainloader = DataLoader(train_data, self.batch_size, shuffle=True, drop_last=drop_last_flag)
         self.testloader =  DataLoader(test_data, self.batch_size, drop_last=False)
         self.testloaderfull = DataLoader(test_data, self.test_samples)
         self.trainloaderfull = DataLoader(train_data, self.train_samples)
