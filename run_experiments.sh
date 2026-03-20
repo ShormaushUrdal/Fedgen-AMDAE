@@ -23,7 +23,7 @@ if [[ "$DATA_NAME" == "EMnist" ]]; then
 elif [[ "$DATA_NAME" == "Mnist" ]]; then
     DATA_RATIO=0.5
 elif [[ "$DATA_NAME" == "UCI HAR" ]]; then
-    DATA_RATIO=0.1
+    DATA_RATIO=0.5
 else
     echo "Unknown dataset: $DATA_NAME. Expected 'EMnist', 'Mnist', or 'UCI HAR'." >&2
     exit 1

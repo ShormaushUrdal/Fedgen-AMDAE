@@ -208,7 +208,7 @@ def get_dataset_name(dataset):
     passed_dataset=dataset.lower()
     if 'celeb' in dataset:
         passed_dataset='celeb'
-    elif 'ucihar' in dataset:
+    elif 'ucihar' in dataset or 'uci har' in dataset:
         passed_dataset='ucihar'
     elif 'emnist' in dataset:
         passed_dataset='emnist'
