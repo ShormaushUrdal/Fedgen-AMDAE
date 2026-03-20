@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # Usage: ./run_all.sh <dataset_string> <num_glob_iters>
 # Example: ./run_all.sh EMnist-alpha0.1-ratio0.1 60
-# Example: ./run_all.sh UCICHAR-alpha0.1-ratio0.1 60
+# Example: ./run_all.sh "UCI HAR-alpha0.1-ratio0.1" 60
 
 if [[ $# -ne 2 ]]; then
   echo "Usage: $(basename "$0") <dataset_string> <num_glob_iters>" >&2

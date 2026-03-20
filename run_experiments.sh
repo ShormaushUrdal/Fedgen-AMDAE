@@ -7,7 +7,7 @@ set -Eeuo pipefail
 if [[ $# -ne 3 ]]; then
   echo "Usage: $(basename "$0") <alpha> <dataset_name> <missing_ratio>" >&2
   echo "  alpha: e.g. 0.1, 1.0, 10.0" >&2
-  echo "  dataset_name: EMnist | Mnist | UCICHAR" >&2
+  echo "  dataset_name: EMnist | Mnist | 'UCI HAR'" >&2
   echo "  missing_ratio: e.g. 0.1, 0.2" >&2
   exit 1
 fi
@@ -22,10 +22,10 @@ if [[ "$DATA_NAME" == "EMnist" ]]; then
     DATA_RATIO=0.1
 elif [[ "$DATA_NAME" == "Mnist" ]]; then
     DATA_RATIO=0.5
-elif [[ "$DATA_NAME" == "UCICHAR" ]]; then
+elif [[ "$DATA_NAME" == "UCI HAR" ]]; then
     DATA_RATIO=0.1
 else
-    echo "Unknown dataset: $DATA_NAME. Expected 'EMnist', 'Mnist', or 'UCICHAR'." >&2
+    echo "Unknown dataset: $DATA_NAME. Expected 'EMnist', 'Mnist', or 'UCI HAR'." >&2
     exit 1
 fi
 

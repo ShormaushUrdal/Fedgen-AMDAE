@@ -36,11 +36,11 @@ def get_data_dir(dataset):
         test_data_dir=os.path.join(path_prefix, 'test')
         proxy_data_dir = 'data/proxy_data/mnist-n10/'
 
-    elif 'UCICHAR' in dataset:
-        # UCICHAR-alpha0.1-ratio0.1
+    elif 'UCI HAR' in dataset:
+        # UCI HAR-alpha0.1-ratio0.1
         dataset_ = dataset.replace('alpha', '').replace('ratio', '').split('-')
         alpha, ratio = dataset_[1], dataset_[2]
-        path_prefix = os.path.join('data', 'UCICHAR', f'u20-alpha{alpha}-ratio{ratio}')
+        path_prefix = os.path.join('data', 'UCI HAR', f'u20-alpha{alpha}-ratio{ratio}')
         train_data_dir = os.path.join(path_prefix, 'train')
         test_data_dir = os.path.join(path_prefix, 'test')
         proxy_data_dir = 'data/proxy_data/ucihar-n10/'
